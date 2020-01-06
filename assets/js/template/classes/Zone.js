@@ -1,15 +1,18 @@
 import {Observable} from "./pattern/observer/Observable";
 import {BackgroundContent} from "./zoneContents/BackgroundContent";
 import {Incruste} from "./objects/incrustes/Incruste";
+import { Template } from "./Template";
 
 
 class Zone{
 
     constructor({size={width:0,height:0}, type='zone', position = {top:0,left:0}}={}){
-        this._$container= null;
+        this._$content = null;
+        this._$container = null;
+        this._$location = {container : null}
         this.$contentSpan = null
         this.$containerAddOnContainer = $('<div></div>')
-        this.type = type;
+        this._type = 'zone';
         this._size = size;
         this._position = position ;
         this.zoneContent = null;
@@ -17,11 +20,29 @@ class Zone{
         this.zoneParent = null;
         this.associatedZone = {};
         this.backgroundColor = 'rgb(255, 119, 119)';
-        this.identificator = null;
+        this._identificator = null;
         this.location=null;
         this.parent=null;
         this.background = {}
         this.zonePropertiesChangeObservable = new Observable()
+        this.buildHTML();
+    }
+
+    get type() {
+        return this._type;
+    }
+
+    set type(type) {
+        this._type = type;
+    }
+
+
+    get identificator(){
+        return this._identificator
+    }
+    set identificator(identificator) {
+        this._identificator = identificator
+        this.$container.attr('data-zone' , this.identificator)
     }
 
     get size() {
@@ -31,6 +52,7 @@ class Zone{
 
 
     set size(size) {
+        console.log('dfdfg')
         if(this.$container === null  || this.$container.length <1) return ;
 
         if (typeof size.width === 'number'){
@@ -121,21 +143,25 @@ class Zone{
     getPosition(){
         return this.position
     }
+    get $content(){
+        return this._$content
+    }
 
-    create({id=this.id,position=this._position,color=this.backgroundColor,size=this.size}={}){
+    set $content($content){
+        this._$content=$content
+    }
 
+    buildHTML(){
 
         this.$container =  $(`<div class="zone" data-type="${this.type}" ></div>`);
+        this.$toolContentContainer=$('<div class="tool-content"></div>');
+        this.$content=$('<div class="zone-content"></div>');
+        this.$container.append(this.$toolContentContainer).append(this.$content);
+    }
 
-
-        this.$zoneInfosContainer=$('<span class="zone-infos-content"></span>');
-        this.$zoneContentContainer=$('<div class="zone-content"></div>');
-        this.$container.append(this.$zoneInfosContainer).append(this.$zoneContentContainer);
-
-
-
-
-        return this.$container
+    append() {
+        if( typeof this.$location !== 'object' || !  (this.$location instanceof Template ) )throw new Error('No location recognized ! impossible to append')
+        this.$location.addZone(this)
     }
 
     isAssociatedTo(zone){
@@ -166,9 +192,17 @@ class Zone{
 
     }
 
+    set $location($location){
+        console.log($location)
+        console.log($location instanceof Template) 
+        console.log(typeof $location)
+        if(typeof $location !== 'object' || ! ( $location instanceof Template) ) throw new Error('Argument must be an object of type Template')
+        this._$location.container = $location ;
+    }
 
-    get $container() {
-        return this._$container;
+
+    get $location() {
+        return this._$location.container;
     }
 
     set $container($container){
@@ -176,11 +210,9 @@ class Zone{
         this._$container = $container;
 
         if(this.zIndex !== null) this._$container.css('zIndex',this.zIndex);
-
-        this._$container.append(this.$container)
-
-
-
+    }
+    get $container(){
+        return this._$container
     }
 
     appendZone(){
